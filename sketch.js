@@ -99,10 +99,10 @@ function instructions() {
 
   const instructions = [
     "Press spacebar to take a snapshot, ESC to clear snapshot",
-    "Press 1 and touch thumb to index to greyscale image",
-    "Touch thumb to index to pixelate image",
-    "Touch thumb to pinkie to blur image",
-    "Hold palm out to apply HSV",
+    "Hold down 1 or touch thumb to index to greyscale image",
+    "Hold down 2 or touch thumb to pinkie to blur face",
+    "Hold down 3 or touch thumb to ring to pixelate face",
+    "Hold down 4 or hold palm out to apply HSV",
   ];
 
   instructions.forEach((text, i) => {
@@ -113,8 +113,8 @@ function instructions() {
 
   const indicators = [
     "Grayscale filter: ",
-    "Blur filter: ",
     "Pixelate filter: ",
+    "Blur filter: ",
     "HSV filter: ",
   ];
 
@@ -187,16 +187,42 @@ function slidersSetup() {
 }
 
 function keyPressed() {
-  //binds for taking a snapshot and clearing snapshot
   if (keyCode === 32) {
-    // spacebar
+    //spacebar
     snapshotImage = video.get();
     isSnapshot = true;
-  }
-  if (keyCode === 27) {
-    // escape key
+  } else if (keyCode === 27) {
+    //escape key
     isSnapshot = false;
     snapshotImage = null;
+  }
+}
+
+function keyPressedControls() {
+  activeEffects.grayscale = false;
+  activeEffects.blur = false;
+  activeEffects.pixelate = false;
+  activeEffects.hsv = false;
+
+  if (keyIsDown(49)) {
+    // key 1
+    activeEffects.grayscale = true;
+    makeGray();
+  }
+  if (keyIsDown(50)) {
+    // key 2
+    activeEffects.pixelate = true;
+    makeBlur();
+  }
+  if (keyIsDown(51)) {
+    // key 3
+    activeEffects.blur = true;
+    makePixel();
+  }
+  if (keyIsDown(52)) {
+    // key 4
+    activeEffects.hsv = true;
+    makeHSV();
   }
 }
 //img processing funcs
@@ -281,6 +307,174 @@ function applyBlur(pixels, width, x, y, radius) {
     Math.round(green / count),
     Math.round(blue / count),
   ]; //return blurred pixel values
+}
+
+function makeGray() {
+  for (let i = 0; i < processedImage.pixels.length; i += 4) {
+    //iterate through pixels in image
+    let r = processedImage.pixels[i]; //get rgb values
+    let g = processedImage.pixels[i + 1];
+    let b = processedImage.pixels[i + 2];
+    let gray = rgbToGray(r, g, b); //convert to grayscale
+    processedImage.pixels[i] = gray; //update pixel values to grayscale
+    processedImage.pixels[i + 1] = gray;
+    processedImage.pixels[i + 2] = gray;
+  }
+}
+
+function makeBlur() {
+  let faces = detector.detect(processedImage.canvas); //detect faces in image using detection model
+
+  for (var i = 0; i < faces.length; ++i) {
+    //iterate through faces detected in image
+    var face = faces[i]; //get face
+    if (face[4] > 4) {
+      //confidence threshold
+      let faceX = Math.floor(face[0]); //face rect coords
+      let faceY = Math.floor(face[1]);
+      let faceWidth = Math.floor(face[2]); //face width and height
+      let faceHeight = Math.floor(face[3]);
+
+      for (let y = faceY; y < faceY + faceHeight; ++y) {
+        //iterate through face pixels to apply blur first
+        for (let x = faceX; x < faceX + faceWidth; ++x) {
+          if (
+            x >= 0 && //check if pixel is within bounds of image
+            x < processedImage.width &&
+            y >= 0 &&
+            y < processedImage.height
+          ) {
+            let [r, g, b] = applyBlur(
+              processedImage.pixels,
+              processedImage.width,
+              x,
+              y,
+              blurIntensitySlider.value() //default 15, otherwise slider value
+            );
+
+            let index = (y * processedImage.width + x) * 4; //update pixel values
+            processedImage.pixels[index] = r;
+            processedImage.pixels[index + 1] = g;
+            processedImage.pixels[index + 2] = b;
+            processedImage.pixels[index + 3] = 255;
+          }
+        }
+      }
+    }
+  }
+}
+
+function makePixel() {
+  let faces = detector.detect(processedImage.canvas);
+
+  for (var i = 0; i < faces.length; ++i) {
+    var face = faces[i];
+    if (face[4] > 4) {
+      //check confidence threshold
+      let faceX = Math.floor(face[0]); //face rect coords
+      let faceY = Math.floor(face[1]);
+      let faceWidth = Math.floor(face[2]); //face width and height
+      let faceHeight = Math.floor(face[3]);
+
+      for (let y = faceY; y < faceY + faceHeight; ++y) {
+        //first iterate through face pixels to greyscale
+        //iterate through face pixels to pixelate
+        for (let x = faceX; x < faceX + faceWidth; ++x) {
+          let index = (y * processedImage.width + x) * 4; //get pixel index in image to assign to rgb values
+          let r = processedImage.pixels[index];
+          let g = processedImage.pixels[index + 1];
+          let b = processedImage.pixels[index + 2];
+          let gray = rgbToGray(r, g, b); //convert pixel to grayscale
+          processedImage.pixels[index] = gray;
+          processedImage.pixels[index + 1] = gray;
+          processedImage.pixels[index + 2] = gray;
+        }
+      }
+      //secondly, split detected face into 5x5 blocks and calculate avg intensity for each block
+      const blockSize = pixelateIntensitySlider.value(); //block size for pixelation, default 5 otherwise slider value
+      for (let y = faceY; y < faceY + faceHeight; y += blockSize) {
+        //iterate through face pixels to pixelate
+        for (let x = faceX; x < faceX + faceWidth; x += blockSize) {
+          let avgIntensity = 0;
+          let count = 0;
+
+          //calculate avg intensity for block
+          for (
+            let by = 0;
+            by < blockSize && y + by < faceY + faceHeight;
+            ++by
+          ) {
+            for (
+              let bx = 0;
+              bx < blockSize && x + bx < faceX + faceWidth;
+              ++bx
+            ) {
+              let c = processedImage.get(x + bx, y + by);
+              avgIntensity += brightness(c);
+              ++count;
+            }
+          }
+          avgIntensity = Math.floor(avgIntensity / count);
+
+          for (
+            let by = 0;
+            by < blockSize && y + by < faceY + faceHeight;
+            ++by
+          ) {
+            for (
+              let bx = 0;
+              bx < blockSize && x + bx < faceX + faceWidth;
+              ++bx
+            ) {
+              //iterate through block pixels to pixelate
+              processedImage.set(x + bx, y + by, color(avgIntensity));
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function makeHSV() {
+  for (let y = 0; y < processedImage.height; ++y) {
+    //iterate through pixels in image
+    for (let x = 0; x < processedImage.width; ++x) {
+      let index = (x + y * processedImage.width) * 4;
+      let r = processedImage.pixels[index] / 255; //convert to 0-1 range
+      let g = processedImage.pixels[index + 1] / 255;
+      let b = processedImage.pixels[index + 2] / 255;
+
+      let max = Math.max(r, g, b); //get minmax values of rgb
+      let min = Math.min(r, g, b);
+      let h,
+        s,
+        v = max;
+
+      let d = max - min;
+      s = max === 0 ? 0 : d / max; //calculate saturation, if max is 0, set to 0, else d/max
+
+      if (max === min) {
+        h = 0;
+      } else {
+        switch (max) {
+          case r:
+            h = (g - b) / d + (g < b ? 6 : 0); //calculate hue based on max red value
+            break;
+          case g:
+            h = (b - r) / d + 2; //calculate hue based on max green value
+            break;
+          case b:
+            h = (r - g) / d + 4; //calculate hue based on max blue value
+            break;
+        }
+        h /= 6; //convert hue to 0-1 scale
+      }
+      processedImage.pixels[index] = h * 255; //update pixel values to hsv
+      processedImage.pixels[index + 1] = s * 255;
+      processedImage.pixels[index + 2] = v * 255;
+    }
+  }
 }
 
 function setup() {
@@ -372,12 +566,6 @@ function drawHandSkeleton() {
 }
 
 function handKeyControls() {
-  //set all active effects to false
-  activeEffects.grayscale = false;
-  activeEffects.blur = false;
-  activeEffects.pixelate = false;
-  activeEffects.hsv = false;
-
   if (predictions.length > 0) {
     const hand = predictions[0];
     const landmarks = hand.landmarks;
@@ -386,6 +574,7 @@ function handKeyControls() {
     const indexTip = landmarks[8];
     const middleTip = landmarks[12];
     const pinkyTip = landmarks[20];
+    const ringTip = landmarks[16];
 
     const thumbIndex = dist(thumbTip[0], thumbTip[1], indexTip[0], indexTip[1]);
     const thumbPinkie = dist(
@@ -400,185 +589,33 @@ function handKeyControls() {
       middleTip[0],
       middleTip[1]
     );
+    const thumbRing = dist(thumbTip[0], thumbTip[1], ringTip[0], ringTip[1]);
 
     let touchThreshold = 50; //min dist for touch to be detected
 
-    if (thumbIndex < touchThreshold && keyIsDown(49)) {
+    if (thumbIndex < touchThreshold) {
       activeEffects.grayscale = true; //set grayscale to true
-      console.log("thumbIndex + 1 greyscale"); //log grayscale filter applied
-      for (let i = 0; i < processedImage.pixels.length; i += 4) {
-        //iterate through pixels in image
-        let r = processedImage.pixels[i]; //get rgb values
-        let g = processedImage.pixels[i + 1];
-        let b = processedImage.pixels[i + 2];
-        let gray = rgbToGray(r, g, b); //convert to grayscale
-        processedImage.pixels[i] = gray; //update pixel values to grayscale
-        processedImage.pixels[i + 1] = gray;
-        processedImage.pixels[i + 2] = gray;
-      }
+      console.log("thumbIndex greyscale"); //log grayscale filter applied
+      makeGray();
     } else if (thumbPinkie < touchThreshold) {
       activeEffects.blur = true; //set blur to true
-      console.log("thumbIndex blur"); //log blur filter applied
-      let faces = detector.detect(processedImage.canvas); //detect faces in image using detection model
-
-      for (var i = 0; i < faces.length; ++i) {
-        //iterate through faces detected in image
-        var face = faces[i]; //get face
-        if (face[4] > 4) {
-          //confidence threshold
-          let faceX = Math.floor(face[0]); //face rect coords
-          let faceY = Math.floor(face[1]);
-          let faceWidth = Math.floor(face[2]); //face width and height
-          let faceHeight = Math.floor(face[3]);
-
-          for (let y = faceY; y < faceY + faceHeight; ++y) {
-            //iterate through face pixels to apply blur first
-            for (let x = faceX; x < faceX + faceWidth; ++x) {
-              if (
-                x >= 0 && //check if pixel is within bounds of image
-                x < processedImage.width &&
-                y >= 0 &&
-                y < processedImage.height
-              ) {
-                let [r, g, b] = applyBlur(
-                  processedImage.pixels,
-                  processedImage.width,
-                  x,
-                  y,
-                  blurIntensitySlider.value() //default 15, otherwise slider value
-                );
-
-                let index = (y * processedImage.width + x) * 4; //update pixel values
-                processedImage.pixels[index] = r;
-                processedImage.pixels[index + 1] = g;
-                processedImage.pixels[index + 2] = b;
-                processedImage.pixels[index + 3] = 255;
-              }
-            }
-          }
-        }
-      }
+      console.log("thumbPinkie blur"); //log blur filter applied
+      makeBlur();
       processedImage.updatePixels();
-    } else if (thumbIndex < touchThreshold) {
+    } else if (thumbRing < touchThreshold) {
       activeEffects.pixelate = true; //set pixelate to true
-      console.log("thumbIndex pixelate"); //log pixelate filter applied
-      let faces = detector.detect(processedImage.canvas);
-
-      for (var i = 0; i < faces.length; ++i) {
-        var face = faces[i];
-        if (face[4] > 4) {
-          //check confidence threshold
-          let faceX = Math.floor(face[0]); //face rect coords
-          let faceY = Math.floor(face[1]);
-          let faceWidth = Math.floor(face[2]); //face width and height
-          let faceHeight = Math.floor(face[3]);
-
-          for (let y = faceY; y < faceY + faceHeight; ++y) {
-            //first iterate through face pixels to greyscale
-            //iterate through face pixels to pixelate
-            for (let x = faceX; x < faceX + faceWidth; ++x) {
-              let index = (y * processedImage.width + x) * 4; //get pixel index in image to assign to rgb values
-              let r = processedImage.pixels[index];
-              let g = processedImage.pixels[index + 1];
-              let b = processedImage.pixels[index + 2];
-              let gray = rgbToGray(r, g, b); //convert pixel to grayscale
-              processedImage.pixels[index] = gray;
-              processedImage.pixels[index + 1] = gray;
-              processedImage.pixels[index + 2] = gray;
-            }
-          }
-          //secondly, split detected face into 5x5 blocks and calculate avg intensity for each block
-          const blockSize = pixelateIntensitySlider.value(); //block size for pixelation, default 5 otherwise slider value
-          for (let y = faceY; y < faceY + faceHeight; y += blockSize) {
-            //iterate through face pixels to pixelate
-            for (let x = faceX; x < faceX + faceWidth; x += blockSize) {
-              let avgIntensity = 0;
-              let count = 0;
-
-              //alculate avg intensity for block
-              for (
-                let by = 0;
-                by < blockSize && y + by < faceY + faceHeight;
-                ++by
-              ) {
-                for (
-                  let bx = 0;
-                  bx < blockSize && x + bx < faceX + faceWidth;
-                  ++bx
-                ) {
-                  let c = processedImage.get(x + bx, y + by);
-                  avgIntensity += brightness(c);
-                  ++count;
-                }
-              }
-              avgIntensity = Math.floor(avgIntensity / count);
-
-              for (
-                let by = 0;
-                by < blockSize && y + by < faceY + faceHeight;
-                ++by
-              ) {
-                for (
-                  let bx = 0;
-                  bx < blockSize && x + bx < faceX + faceWidth;
-                  ++bx
-                ) {
-                  //iterate through block pixels to pixelate
-                  processedImage.set(x + bx, y + by, color(avgIntensity));
-                }
-              }
-            }
-          }
-        }
-      }
+      console.log("thumbRing pixelate"); //log pixelate filter applied
+      makePixel();
       processedImage.updatePixels();
     } else if (indexMiddle < touchThreshold) {
       activeEffects.hsv = true; //set hsv to true
       console.log("palmOut hsv"); //log hsv filter applied
-      for (let y = 0; y < processedImage.height; ++y) {
-        //iterate through pixels in image
-        for (let x = 0; x < processedImage.width; ++x) {
-          let index = (x + y * processedImage.width) * 4;
-          let r = processedImage.pixels[index] / 255; //convert to 0-1 range
-          let g = processedImage.pixels[index + 1] / 255;
-          let b = processedImage.pixels[index + 2] / 255;
-
-          let max = Math.max(r, g, b); //get minmax values of rgb
-          let min = Math.min(r, g, b);
-          let h,
-            s,
-            v = max;
-
-          let d = max - min;
-          s = max === 0 ? 0 : d / max; //calculate saturation, if max is 0, set to 0, else d/max
-
-          if (max === min) {
-            h = 0;
-          } else {
-            switch (max) {
-              case r:
-                h = (g - b) / d + (g < b ? 6 : 0); //calculate hue based on max red value
-                break;
-              case g:
-                h = (b - r) / d + 2; //calculate hue based on max green value
-                break;
-              case b:
-                h = (r - g) / d + 4; //calculate hue based on max blue value
-                break;
-            }
-            h /= 6; //convert hue to 0-1 scale
-          }
-          processedImage.pixels[index] = h * 255; //update pixel values to hsv
-          processedImage.pixels[index + 1] = s * 255;
-          processedImage.pixels[index + 2] = v * 255;
-        }
-      }
+      makeHSV();
     } else {
       activeEffects.grayscale = false; //set all effects to false if no hand pose detected
       activeEffects.blur = false;
       activeEffects.pixelate = false;
       activeEffects.hsv = false;
-      processedImage.updatePixels();
     }
   }
 }
@@ -797,6 +834,7 @@ function draw() {
   let faces = detector.detect(processedImage.canvas);
 
   handKeyControls();
+  keyPressedControls();
   //display processed image
   processedImage.updatePixels();
   image(processedImage, 0, 0, vidW, vidH);
@@ -917,8 +955,8 @@ function resetThresholds() {
 function updateFilterStatus() {
   const effects = [
     activeEffects.grayscale,
-    activeEffects.blur,
     activeEffects.pixelate,
+    activeEffects.blur,
     activeEffects.hsv,
   ];
 

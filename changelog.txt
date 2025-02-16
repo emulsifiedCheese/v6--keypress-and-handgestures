@@ -1,16 +1,15 @@
-filter intensity sliders for the blurring and pixelation
-    add labels and sliders
+added keypress and hand gestures to apply filters
 
-    blur default at radius 15, min max 0-30
-        adjust blurradius (done)
+current :
+    Press spacebar to take a snapshot, ESC to clear snapshot
+    Press 1 and touch thumb to index to greyscale image
+    Touch thumb to index to pixelate image
+    Touch thumb to pinkie to blur image
+    Hold palm out to apply HSV
 
-    pixelation default at 5 blocks, min max 0-20
-        adjust blocksize (done)
-
-    assign html values to update value
-          ycbcrThresholdValue.html(ycbcrThreshold.value()); (done)
-
-    assign slider value to update function to adjust blurring and pixelation accordingly (done)
-
-frame rate
-    fps counter (done)
+new :
+    Press spacebar to take a snapshot, ESC to clear snapshot
+    Press 1 or touch thumb to index to greyscale image
+    Press 2 or touch thumb to index to pixelate image
+    Press 3 or ouch thumb to pinkie to blur image
+    Press 4 or hold palm out to apply HSV
