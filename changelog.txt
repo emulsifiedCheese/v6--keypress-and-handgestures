@@ -8,8 +8,14 @@ current :
     Hold palm out to apply HSV
 
 new :
-    Press spacebar to take a snapshot, ESC to clear snapshot
-    Press 1 or touch thumb to index to greyscale image
-    Press 2 or touch thumb to index to pixelate image
-    Press 3 or ouch thumb to pinkie to blur image
-    Press 4 or hold palm out to apply HSV
+    "Press spacebar to take a snapshot, ESC to clear snapshot",
+    "Hold down 1 or touch thumb to index to greyscale image",
+    "Hold down 2 or touch thumb to pinkie to blur face",
+    "Hold down 3 or touch thumb to ring to pixelate face",
+    "Hold down 4 or hold palm out to apply HSV",
+
+added functions to prevent repeating code inefficiently
+    function makeGray() {}
+    function makeBlur() {}
+    function makePixel() {}
+    function makeHSV() {}
