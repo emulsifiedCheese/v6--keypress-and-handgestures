@@ -1,0 +1,16 @@
+filter intensity sliders for the blurring and pixelation
+    add labels and sliders
+
+    blur default at radius 15, min max 0-30
+        adjust blurradius (done)
+
+    pixelation default at 5 blocks, min max 0-20
+        adjust blocksize (done)
+
+    assign html values to update value
+          ycbcrThresholdValue.html(ycbcrThreshold.value()); (done)
+
+    assign slider value to update function to adjust blurring and pixelation accordingly (done)
+
+frame rate
+    fps counter (done)
