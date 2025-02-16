@@ -36,7 +36,7 @@ let activeEffects = {
 
 let filterStatusLabels = [];
 
-let frameRateP, sourceBuffer;
+let frameRateP;
 
 function setupFPSCounter() {
   push();
@@ -585,8 +585,6 @@ function handKeyControls() {
 
 function draw() {
   let sourceImage = isSnapshot ? snapshotImage : video; //if snapshot taken, use snapshot image, else use live video feed
-  sourceBuffer = sourceImage.get();
-  sourceBuffer.loadPixels();
   //first row
   //FIRST IMAGE
   translate(vidW, 0);
