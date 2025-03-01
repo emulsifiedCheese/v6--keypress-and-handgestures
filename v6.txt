@@ -67,7 +67,7 @@ function labelMaker() {
     ["Red Threshold:", 0.1, 2 * vidH],
     ["Green Threshold:", 1.1, 2 * vidH],
     ["Blue Threshold:", 2.1, 2 * vidH],
-    ["Original:", 0.1, 3 * vidH],
+    ["Controller:", 0.1, 3 * vidH],
     ["HSV:", 1.1, 3 * vidH],
     ["YCbCr:", 2.1, 3 * vidH],
     ["Processed Image:", 0.1, 4 * vidH],
@@ -86,16 +86,19 @@ function nameInfo() {
     ["Name: Ryan Aw", 0],
     ["Student ID: 240662206", 20],
     ["Goldsmiths, University of London", 40],
+    ["BSc Computer Science", 60],
+    ["CM2030 – Graphics Programming", 80],
+    ["Final Coursework: An image processing application", 100],
   ];
 
   info.forEach(([text, y]) => {
-    createLabel(text, vidW * 3.5, y, "18px");
+    createLabel(text, vidW * 3.5, y, "16px");
   });
 }
 
 function instructions() {
   //create labels for instructions and active effects
-  createLabel("Instructions:", vidW * 3.5, 80, "18px");
+  createLabel("Instructions:", vidW * 3.5, 120, "18px");
 
   const instructions = [
     "Press spacebar to take a snapshot, ESC to clear snapshot",
@@ -106,10 +109,10 @@ function instructions() {
   ];
 
   instructions.forEach((text, i) => {
-    createLabel(text, vidW * 3.5, 110 + i * 20, "16px");
+    createLabel(text, vidW * 3.5, 140 + i * 20, "16px");
   });
 
-  createLabel("Active Effects:", vidW * 3.5, 230, "18px");
+  createLabel("Active Effects:", vidW * 3.5, 250, "18px");
 
   const indicators = [
     "Grayscale filter: ",
@@ -119,11 +122,11 @@ function instructions() {
   ];
 
   indicators.forEach((text, i) => {
-    createLabel(text, vidW * 3.5, 260 + i * 20, "16px");
+    createLabel(text, vidW * 3.5, 275 + i * 20, "16px");
     let statusLabel = createLabel(
       "Not Applied",
       vidW * 3.5 + 120,
-      260 + i * 20,
+      275 + i * 20,
       "16px"
     );
     statusLabel.style("color", "#FF0000"); //red if filter not applied
@@ -961,7 +964,7 @@ function updateFilterStatus() {
   ];
 
   effects.forEach((isActive, i) => {
-    filterStatusLabels[i].html(isActive ? "Applied" : "Not Applied"); //update filter status label
+    filterStatusLabels[i].html(isActive ? "Active" : "Not Active"); //update filter status label
     filterStatusLabels[i].style("color", isActive ? "#00FF00" : "#FF0000"); //green if filter applied, red if not
   });
 }

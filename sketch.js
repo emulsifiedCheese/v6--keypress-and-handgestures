@@ -85,12 +85,10 @@ function nameInfo() {
   const info = [
     ["Name: Ryan Aw", 0],
     ["Student ID: 240662206", 20],
-    ["Goldsmiths, University of London",  40],
+    ["Goldsmiths, University of London", 40],
     ["BSc Computer Science", 60],
-    [
-      "CM2030 – Graphics Programming, Final Coursework: An image processing application",
-      80,
-    ],
+    ["CM2030 – Graphics Programming", 80],
+    ["Final Coursework: An image processing application", 100],
   ];
 
   info.forEach(([text, y]) => {
@@ -100,7 +98,7 @@ function nameInfo() {
 
 function instructions() {
   //create labels for instructions and active effects
-  createLabel("Instructions:", vidW * 3.5, 100, "18px");
+  createLabel("Instructions:", vidW * 3.5, 120, "18px");
 
   const instructions = [
     "Press spacebar to take a snapshot, ESC to clear snapshot",
@@ -111,10 +109,10 @@ function instructions() {
   ];
 
   instructions.forEach((text, i) => {
-    createLabel(text, vidW * 3.5, 120 + i * 20, "16px");
+    createLabel(text, vidW * 3.5, 140 + i * 20, "16px");
   });
 
-  createLabel("Active Effects:", vidW * 3.5, 230, "18px");
+  createLabel("Active Effects:", vidW * 3.5, 250, "18px");
 
   const indicators = [
     "Grayscale filter: ",
@@ -124,11 +122,11 @@ function instructions() {
   ];
 
   indicators.forEach((text, i) => {
-    createLabel(text, vidW * 3.5, 250 + i * 20, "16px");
+    createLabel(text, vidW * 3.5, 275 + i * 20, "16px");
     let statusLabel = createLabel(
       "Not Applied",
       vidW * 3.5 + 120,
-      260 + i * 20,
+      275 + i * 20,
       "16px"
     );
     statusLabel.style("color", "#FF0000"); //red if filter not applied
